@@ -16,7 +16,8 @@ public enum ContentType
     PICKANDPLACE,
     IMAGEMARKER,
     PLUGIN,
-    DRAWING
+    DRAWING,
+    EROBSON
 }
 
 public static class ContentTypeExtenstion
@@ -35,6 +36,7 @@ public static class ContentTypeExtenstion
     private const string IMAGEMARKER = "Image marker";
     private const string PLUGIN = "Plugin";
     private const string DRAWING = "Drawing";
+    private const string EROBSON = "eRobson";
     
     private const string PREDICATE_UNKNOWN = "unknown";
     private const string PREDICATE_LABEL = "label";
@@ -83,6 +85,7 @@ public static class ContentTypeExtenstion
     private const string IMAGEMARKER_IMAGE_PATH = "Materials/Textures/imagemarkereditor";
     private const string PLUGIN_IMAGE_PATH = "Materials/Textures/plugineditor";
     private const string DRAWING_IMAGE_PATH = "Materials/Textures/drawingeditor";
+    private const string UNKNOWN_IMAGE_PATH = "Materials/Textures/circulartimer";
 
     public static string GetName(this ContentType type)
     {
@@ -102,8 +105,8 @@ public static class ContentTypeExtenstion
             case ContentType.IMAGEMARKER:  return IMAGEMARKER;
             case ContentType.PLUGIN:       return PLUGIN;
             case ContentType.DRAWING:      return DRAWING;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            case ContentType.EROBSON:      return EROBSON;
+            default:                       return UNKNOWN;
         }
     }
 
@@ -128,10 +131,9 @@ public static class ContentTypeExtenstion
             case ContentType.PICKANDPLACE: return PICKANDPLACE_IMAGE_PATH;
             case ContentType.IMAGEMARKER:  return IMAGEMARKER_IMAGE_PATH;
             case ContentType.PLUGIN:       return PLUGIN_IMAGE_PATH;
-            case ContentType.UNKNOWN:      return MODEL_IMAGE_PATH; // TODO: add icon for unknown content type
             case ContentType.DRAWING:      return DRAWING_IMAGE_PATH;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            case ContentType.UNKNOWN:      return UNKNOWN_IMAGE_PATH;
+            default:                       return UNKNOWN_IMAGE_PATH;
         }
     }
 
@@ -153,8 +155,7 @@ public static class ContentTypeExtenstion
             case ContentType.IMAGEMARKER:  return IMAGEMARKER_HINT;
             case ContentType.PLUGIN:       return PLUGIN_HINT;
             case ContentType.DRAWING:      return DRAWING_HINT;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            default:                       return UNKNOWN_HINT;
         }
     }
 
@@ -176,8 +177,7 @@ public static class ContentTypeExtenstion
             case ContentType.IMAGEMARKER:  return PREDICATE_IMAGEMARKER;
             case ContentType.PLUGIN:       return PREDICATE_PLUGIN;
             case ContentType.DRAWING:      return PREDICATE_DRAWING;
-            default:
-                throw new ArgumentOutOfRangeException(nameof(type), type, null);
+            default:                       return PREDICATE_UNKNOWN;
         }
     }
 

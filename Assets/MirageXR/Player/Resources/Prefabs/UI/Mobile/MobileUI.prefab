@@ -1956,6 +1956,17 @@ PrefabInstance:
       propertyPath: m_HorizontalAlignment
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 5038378982274229811, guid: 064b377d13533894382be544dfab8b52,
+        type: 3}
+      propertyPath: _editors.Array.size
+      value: 13
+      objectReference: {fileID: 0}
+    - target: {fileID: 5038378982274229811, guid: 064b377d13533894382be544dfab8b52,
+        type: 3}
+      propertyPath: _editors.Array.data[12]
+      value: 
+      objectReference: {fileID: 8232127685116320836, guid: 700bc9953374ab14d98397616c5eeb3b,
+        type: 3}
     - target: {fileID: 5067946464243394973, guid: 064b377d13533894382be544dfab8b52,
         type: 3}
       propertyPath: m_Layer
