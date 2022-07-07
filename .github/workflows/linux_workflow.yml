@@ -26,6 +26,10 @@ jobs:
           restore-keys: |
             Library-
 
+       - name: Show disk space
+          run: |
+            cd / && tree --du -h -d
+
       # Test stage
       - name: Unity Test runner (edit and play mode)
         uses: game-ci/unity-test-runner@v2.0.0-alpha-7
