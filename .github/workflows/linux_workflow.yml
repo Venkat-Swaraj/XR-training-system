@@ -39,6 +39,11 @@ jobs:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2020.3.13f1
 
+      - name: Show disk space after tests
+        run: |
+          cd / && tree --du -h -d
+
+
   build:
     name: Build Unity
     runs-on: ubuntu-latest
