@@ -26,9 +26,9 @@ jobs:
           restore-keys: |
             Library-
 
-       - name: Show disk space
-          run: |
-            cd / && tree --du -h -d
+      - name: Show disk space
+        run: |
+          cd / && tree --du -h -d
 
       # Test stage
       - name: Unity Test runner (edit and play mode)
