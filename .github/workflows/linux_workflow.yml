@@ -26,10 +26,6 @@ jobs:
           restore-keys: |
             Library-
 
-      - name: Show disk space
-        run: |
-          cd / && tree --du -h -d
-
       # Test stage
       - name: Unity Test runner (edit and play mode)
         uses: game-ci/unity-test-runner@v2.0.0-alpha-7
@@ -38,10 +34,6 @@ jobs:
         with:
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           unityVersion: 2020.3.13f1
-
-      - name: Show disk space after tests
-        run: |
-          cd / && tree --du -h -d
 
 
   build:
@@ -71,6 +63,10 @@ jobs:
           restore-keys: |
             Library-
 
+      - name: Show disk space
+        run: |
+          cd / && tree --du -h -d
+
       # Build stage
       - name: Unity builder
         uses: game-ci/unity-builder@v2
@@ -85,6 +81,10 @@ jobs:
           versioning: Semantic
           # dirty build needed to include generated Watson credentials
           allowDirtyBuild: true
+
+      - name: Show disk space
+        run: |
+          cd / && tree --du -h -d
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v2
