@@ -9,6 +9,7 @@ namespace MirageXR
         public MoodleManager moodleManager;
         public EditorSceneService editorSceneService;
         public WorkplaceManager workplaceManager;
+        public ImageTargetManager imageTargetManager;
         
         public static RootObject Instance { get; private set; }
 
@@ -41,6 +42,7 @@ namespace MirageXR
             moodleManager = new MoodleManager();
             editorSceneService = new EditorSceneService();
             workplaceManager = new WorkplaceManager();
+            imageTargetManager = new ImageTargetManager();
 
             activityManager.Subscription();
             _isInitialized = true;
