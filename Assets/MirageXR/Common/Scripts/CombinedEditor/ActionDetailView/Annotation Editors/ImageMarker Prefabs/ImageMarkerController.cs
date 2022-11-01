@@ -1,25 +1,23 @@
 ﻿using System.Collections;
 using System.IO;
 using UnityEngine;
+using UnityEngine.Events;
 using Vuforia;
 using UnityEngine.XR.ARFoundation;
 using UnityEngine.XR.ARSubsystems;
-using UnityEngine.Events;
 
 namespace MirageXR
 {
     public class ImageMarkerController : MirageXRPrefab
     {
-
-
         private string ImgMName;
         private ToggleObject _obj;
 
         private Texture2D _ImageMarkerImage;
         private Detectable detectable;
         private GameObject detectableOB;
-
-
+        private ImageTargetManager imageTargetManager;
+        private UniversalImageTarget imageTarget;
 
 #if UNITY_ANDROID || UNITY_IOS
         [SerializeField] private XRReferenceImageLibrary serializedLibrary;
@@ -32,6 +30,7 @@ namespace MirageXR
 
         private void Awake()
         {
+            this.imageTargetManager = RootObject.Instance.imageTargetManager;
 
 #if UNITY_ANDROID || UNITY_IOS
             GameObject tracker = GameObject.Find("MixedRealityPlayspace");
@@ -54,15 +53,127 @@ namespace MirageXR
 
         private void Start()
         {
-            var workplaceManager = RootObject.Instance.workplaceManager;
-            detectable = workplaceManager.GetDetectable(workplaceManager.GetPlaceFromTaskStationId(_obj.id));
-            detectableOB = GameObject.Find(detectable.id);
+
 #if UNITY_ANDROID || UNITY_IOS
             trackImageManager.trackedImagePrefab = detectableOB;
 #endif
         }
 
         public override bool Init(ToggleObject obj)
+        {
+            this._obj = obj;
+
+            var workplaceManager = RootObject.Instance.workplaceManager;
+            this.detectable = workplaceManager.GetDetectable(workplaceManager.GetPlaceFromTaskStationId(_obj.id));
+            this.detectableOB = GameObject.Find(this.detectable.id);
+
+            Debug.Log("Object ID: " + _obj.id);
+
+            // Check that url is not empty.
+            if (string.IsNullOrEmpty(_obj.url))
+            {
+                Debug.Log("Content URL not provided.");
+                return false;
+            }
+
+            // Try to set the parent and if it fails, terminate initialization.
+            if (!SetParent(this._obj))
+            {
+                Debug.Log("Couldn't set the parent.");
+                return false;
+            }
+
+            // Get the last bit of the url.
+            var id = this._obj.url.Split('/')[this._obj.url.Split('/').Length - 1];
+
+            // Rename with the predicate + id to get unique name.
+            this.name = this._obj.predicate + "_" + id;
+
+            // Load from resources.
+            if (this._obj.url.StartsWith("resources://"))
+            {
+                // Set image url.
+                this.ImgMName = this._obj.url.Replace("resources://", "");
+            }
+
+            // Load from external url.
+            else
+            {
+                // Set image url.
+                this.ImgMName = this._obj.url;
+            }
+
+            if (GameObject.Find(this.ImgMName))
+            {
+                this.imageTargetManager.RegisterImageTracker(this.imageTargetManager.GetImageTargetFromName(this.ImgMName));
+            }
+            else
+            {
+                this.StartCoroutine(nameof(this.LoadImage));
+            }
+
+            return base.Init(this._obj);
+        }
+
+        private IEnumerator LoadImage()
+        {
+            byte[] byteArray = File.ReadAllBytes(Path.Combine(RootObject.Instance.activityManager.ActivityPath, this.ImgMName));
+
+            Texture2D loadTexture = new Texture2D(2, 2);
+
+            bool isLoaded = loadTexture.LoadImage(byteArray);
+
+            yield return isLoaded;
+
+            if (isLoaded)
+            {
+                this.imageTarget = this.imageTargetManager.CreateUniversalImageTarget(this.ImgMName, loadTexture, this.detectableOB);
+                this.imageTargetManager.RegisterImageTracker(this.imageTarget);
+
+            }
+            else
+            {
+                // debugLog.text += "Failed to load image";
+                Debug.Log("Failed to load image");
+            }
+        }
+
+        public void PlatformOnDestroy()
+        {
+#if UNITY_ANDROID || UNITY_IOS
+            trackImageManager.referenceLibrary = trackImageManager.CreateRuntimeLibrary(serializedLibrary);
+            Destroy(gameObject);
+#else
+            // Get the last bit of the url.
+            // Detectable detectable = RootObject.Instance.workplaceManager.GetDetectable(RootObject.Instance.workplaceManager.GetPlaceFromTaskStationId(_obj.id));
+
+            Debug.Log("The image target name is: " + this.imageTarget.targetName);
+            Debug.Log("The image target prefab name is: " + this.imageTarget.prefab.name);
+
+            GameObject detectableObj = this.imageTarget.prefab;  //GameObject.Find(detectable.id);
+            GameObject detectableParentObj = GameObject.Find("Detectables");
+
+            // as Vuforia doesn't allow image markers to be destroyed at run time the detectable is moved instead leaving the marker still in the scene but removeing its content
+            detectableObj.transform.parent = detectableParentObj.transform;
+
+#endif
+        }
+
+        public override void Delete()
+        {
+            // changed Delete to a virtual method so I could overide it for Image markers as they were being deleted twice when changing activities causeing the new activity not to load
+        }
+
+
+
+
+
+
+
+
+
+
+        public bool Init2(ToggleObject obj)
         {
             _obj = obj;
 
@@ -121,7 +232,7 @@ namespace MirageXR
             return base.Init(_obj);
         }
 
-        private IEnumerator LoadImage()
+        private IEnumerator LoadImage2()
         {
             byte[] byteArray = File.ReadAllBytes(Path.Combine(RootObject.Instance.activityManager.ActivityPath, ImgMName));
             // Find and load the image to be used for createing an image marker
@@ -137,16 +248,18 @@ namespace MirageXR
             if (isLoaded)
             {
                 _ImageMarkerImage = loadTexture;
+
+                //imageTargetManager.RegisterImageTracker(ImgMName, _ImageMarkerImage, detectableOB);
 #if UNITY_ANDROID || UNITY_IOS
 
-                MutableRuntimeReferenceImageLibrary mutableRuntimeReferenceImageLibrary = trackImageManager.referenceLibrary as MutableRuntimeReferenceImageLibrary;
+                // MutableRuntimeReferenceImageLibrary mutableRuntimeReferenceImageLibrary = trackImageManager.referenceLibrary as MutableRuntimeReferenceImageLibrary;
 
-                var jobHandle = mutableRuntimeReferenceImageLibrary.ScheduleAddImageJob(loadTexture, ImgMName, _obj.scale);
+                //var jobHandle = mutableRuntimeReferenceImageLibrary.ScheduleAddImageJob(loadTexture, ImgMName, _obj.scale);
 
 #else
 
-                VuforiaARController.Instance.RegisterVuforiaStartedCallback(HoloLensCreateImageTargetFromImageFile);
-                // calls the method to create an image marker using Vuforia for non-mobile builds
+        VuforiaARController.Instance.RegisterVuforiaStartedCallback(HoloLensCreateImageTargetFromImageFile);
+        // calls the method to create an image marker using Vuforia for non-mobile builds
 #endif
             }
             else
@@ -175,42 +288,42 @@ namespace MirageXR
             trackImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
         }
 #else
-        private void HoloLensCreateImageTargetFromImageFile()
-        {
+private void HoloLensCreateImageTargetFromImageFile()
+{
 
-            objectTracker.Start();
+    objectTracker.Start();
 
-            Debug.Log("is tracker active = " + objectTracker.IsActive);
+    Debug.Log("is tracker active = " + objectTracker.IsActive);
 
 
-            var runtimeImageSource = objectTracker.RuntimeImageSource;
-            bool result = runtimeImageSource.SetImage(_ImageMarkerImage, _obj.scale, ImgMName);
-            // get the runtime image source and set the texture to load
+    var runtimeImageSource = objectTracker.RuntimeImageSource;
+    bool result = runtimeImageSource.SetImage(_ImageMarkerImage, _obj.scale, ImgMName);
+    // get the runtime image source and set the texture to load
 
-            Debug.Log("Result: " + result);
+    Debug.Log("Result: " + result);
 
-            var dataset = objectTracker.CreateDataSet();
+    var dataset = objectTracker.CreateDataSet();
 
-            if (result)
-            {
-                trackableBehaviour = dataset.CreateTrackable(runtimeImageSource, ImgMName);
-                // use dataset and use the source to create a new trackable image target called ImageTarget
+    if (result)
+    {
+        trackableBehaviour = dataset.CreateTrackable(runtimeImageSource, ImgMName);
+        // use dataset and use the source to create a new trackable image target called ImageTarget
 
-                Debug.Log(trackableBehaviour.name);
-                IM = trackableBehaviour.gameObject;
-                IM.AddComponent<TrackableEventHandlerEvents>();
-                // IM.AddComponent<DefaultTrackableEventHandler>();
-                // add the DefaultTrackableEventHandler to the newly created game object
+        Debug.Log(trackableBehaviour.name);
+        IM = trackableBehaviour.gameObject;
+        IM.AddComponent<TrackableEventHandlerEvents>();
+        // IM.AddComponent<DefaultTrackableEventHandler>();
+        // add the DefaultTrackableEventHandler to the newly created game object
 
-                GameObject detectableParentObj = GameObject.Find("Detectables");
-                IM.transform.parent = detectableParentObj.transform;
-                detectableAsChild();
-                // move the Image marker to be a child of the Detectables object in the player scene and set the current detectable to be a child of the newly created Image marker
-            }
+        GameObject detectableParentObj = GameObject.Find("Detectables");
+        IM.transform.parent = detectableParentObj.transform;
+        detectableAsChild();
+        // move the Image marker to be a child of the Detectables object in the player scene and set the current detectable to be a child of the newly created Image marker
+    }
 
-            objectTracker.ActivateDataSet(dataset);
+    objectTracker.ActivateDataSet(dataset);
 
-        }
+}
 #endif
 
 
@@ -231,32 +344,12 @@ namespace MirageXR
             augmentation.transform.localPosition = new Vector3(0, 0.1f, 0);
 
         }
-
-        public void PlatformOnDestroy()
-        {
-#if UNITY_ANDROID || UNITY_IOS
-            trackImageManager.referenceLibrary = trackImageManager.CreateRuntimeLibrary(serializedLibrary);
-            Destroy(gameObject);
-#else
-            // Get the last bit of the url.
-            Detectable detectable = RootObject.Instance.workplaceManager.GetDetectable(RootObject.Instance.workplaceManager.GetPlaceFromTaskStationId(_obj.id));
-
-            GameObject detectableObj = GameObject.Find(detectable.id);
-            GameObject detectableParentObj = GameObject.Find("Detectables");
-
-            // as Vuforia doesn't allow image markers to be destroyed at run time the detectable is moved instead leaving the marker still in the scene but removeing its content
-            detectableObj.transform.parent = detectableParentObj.transform;
-
-#endif
-        }
-
-
-        public override void Delete()
-        {
-            // changed Delete to a virtual method so I could overide it for Image markers as they were being deleted twice when changing activities causeing the new activity not to load
-        }
     }
 }
+
+
+
+
 
 
 [RequireComponent(typeof(TrackableBehaviour))]
