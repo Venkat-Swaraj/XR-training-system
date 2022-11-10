@@ -74,6 +74,27 @@ jobs:
           restore-keys: |
             Library-
 
+      # https://github.com/game-ci/unity-builder/issues/191
+      - name: Free Disk Space for Android
+        run: |
+          sudo swapoff -a
+          sudo rm -f /swapfile
+          sudo apt clean
+          docker rmi $(docker images -q)
+          df -h
+          # Before
+          echo "Disk space before:"
+          df -h
+          echo "Removing large directories"
+          # https://github.com/apache/flink/blob/master/tools/azure-pipelines/free_disk_space.sh
+          rm -rf /usr/share/dotnet/
+          # https://github.com/actions/virtual-environments/issues/709#issuecomment-612569242
+          rm -rf "/usr/local/share/boost"
+          rm -rf "$AGENT_TOOLSDIRECTORY"
+          # After
+          echo "Disk space after:"
+          df -h
+
       # Build stage
       - name: Unity builder
         uses: game-ci/unity-builder@v2.1.1
