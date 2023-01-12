@@ -9,7 +9,6 @@ namespace MirageXR
 {
     public class ImageMarkerController : MirageXRPrefab
     {
-        private Text IMT;
         private string ImgMName;
         private ToggleObject _obj;
 
@@ -21,7 +20,6 @@ namespace MirageXR
         private void Awake()
         {
             this.imageTargetManager = RootObject.Instance.imageTargetManager;
-            this.IMT = RootObject.Instance.IMT;
         }
 
         public override bool Init(ToggleObject obj)
@@ -88,12 +86,10 @@ namespace MirageXR
 
             yield return isLoaded;
 
-            this.IMT.text = "IsLoaded = " + isLoaded;
 
             if (isLoaded)
             {
                 this.imageTarget = this.imageTargetManager.CreateUniversalImageTarget(this.ImgMName, loadTexture, this.detectableOB);
-                this.IMT.text = this.IMT.text + "\n ImgMName = " + this.imageTarget.TargetName;
                 this.imageTargetManager.RegisterImageTracker(this.imageTarget);
 
             }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.XR.ARSubsystems;
 
 namespace MirageXR
 {
@@ -10,7 +11,8 @@ namespace MirageXR
         public EditorSceneService editorSceneService;
         public WorkplaceManager workplaceManager;
         public ImageTargetManager imageTargetManager;
-        
+        public XRReferenceImageLibrary serializedLibrary;
+
         public static RootObject Instance { get; private set; }
 
         private bool _isInitialized;
