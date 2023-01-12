@@ -54,6 +54,10 @@ public abstract class ImageTracker : MonoBehaviour
     /// <param name="max">Number of moving images.</param>
     public abstract void SetMovingImages(int max);
 
+    public abstract void PlatformOnDestroy(UniversalImageTarget imageTarget);
+
+    public abstract void PlatformOnDestroy(UniversalImageTarget imageTarget, GameObject newParent);
+
     /// <summary>
     /// Returns the index of an image target in the tracked images list.
     /// </summary>

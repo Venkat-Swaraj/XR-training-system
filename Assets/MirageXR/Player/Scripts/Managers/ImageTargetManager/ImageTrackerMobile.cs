@@ -1,3 +1,4 @@
+using MirageXR;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,8 +7,6 @@ using UnityEngine.XR.ARSubsystems;
 
 public class ImageTrackerMobile : ImageTracker
 {
-
-    [SerializeField] private XRReferenceImageLibrary serializedLibrary;
     private ARTrackedImageManager trackedImageManager;
     private MutableRuntimeReferenceImageLibrary mutableRuntimeReferenceImageLibrary;
     private Text IMT;
@@ -15,45 +14,45 @@ public class ImageTrackerMobile : ImageTracker
     private void Awake()
     {
 
-        IMT = GameObject.Find("IMText").GetComponent<Text>();
+    }
 
-        IMT.text = "TEXT OBJECT FOUND";
+    public override void Init()
+    {
+        this.IMT = RootObject.Instance.IMT;
+
+        this.IMT.text = "TEXT OBJECT FOUND";
 
         GameObject tracker = GameObject.Find("MixedRealityPlayspace");
 
         if (tracker.GetComponent<ARTrackedImageManager>())
         {
-            trackedImageManager = tracker.GetComponent<ARTrackedImageManager>();
+            this.trackedImageManager = tracker.GetComponent<ARTrackedImageManager>();
         }
         else
         {
-            trackedImageManager = tracker.AddComponent<ARTrackedImageManager>();
+            this.trackedImageManager = tracker.AddComponent<ARTrackedImageManager>();
         }
 
-        
+        this.buildTrackedImageManager(1);
     }
 
-    public override void Init()
+    public void buildTrackedImageManager(int numberOfMovingImages)
     {
-        buildTrackedImageManager(1);
-    }
+        this.trackedImageManager.referenceLibrary = this.trackedImageManager.CreateRuntimeLibrary(RootObject.Instance.serializedLibrary);
+        this.trackedImageManager.requestedMaxNumberOfMovingImages = numberOfMovingImages;
+        this.trackedImageManager.enabled = true;
+        this.trackedImageManager.trackedImagesChanged += this.OnTrackedImagesChanged;
 
-    public void buildTrackedImageManager(int NumberOfMovingImages) 
-    {
-        trackedImageManager.referenceLibrary = trackedImageManager.CreateRuntimeLibrary(serializedLibrary);
-        trackedImageManager.maxNumberOfMovingImages = NumberOfMovingImages;
-        trackedImageManager.enabled = true;
-        trackedImageManager.trackedImagesChanged += OnTrackedImagesChanged;
+        this.mutableRuntimeReferenceImageLibrary = this.trackedImageManager.referenceLibrary as MutableRuntimeReferenceImageLibrary;
 
-        mutableRuntimeReferenceImageLibrary = trackedImageManager.referenceLibrary as MutableRuntimeReferenceImageLibrary;
-
-        if (mutableRuntimeReferenceImageLibrary == null)
+        if (this.mutableRuntimeReferenceImageLibrary == null)
         {
-            IMT.text = "\n MRL NULL";
+            this.IMT.text = "\n MRL NULL";
         }
-        else {
-            IMT.text = "\n MRL MADE";
-        }     
+        else
+        {
+            this.IMT.text = this.IMT.text + "\n MRL MADE";
+        }
     }
 
     private void OnTrackedImagesChanged(ARTrackedImagesChangedEventArgs eventArgs)
@@ -61,16 +60,16 @@ public class ImageTrackerMobile : ImageTracker
         foreach (ARTrackedImage trackedImage in eventArgs.added)
         {
             trackedImage.transform.Rotate(Vector3.up, 180);
-            SetTrackedImagePrefab(trackedImage);
+            this.SetTrackedImagePrefab(trackedImage);
 
-            IMT.text = trackedImage + " ADDED";
+            this.IMT.text = trackedImage.referenceImage.name + " ADDED";
         }
 
         foreach (ARTrackedImage trackedImage in eventArgs.updated)
         {
             trackedImage.transform.Rotate(Vector3.up, 180);
-            SetTrackedImagePrefab(trackedImage);
-            IMT.text = trackedImage + " TRACKED";
+            this.SetTrackedImagePrefab(trackedImage);
+            this.IMT.text = " updated tracking: \n" + trackedImage.referenceImage.name + "\n looking for target: \n" + ImageTargets[0].TargetName;
         }
     }
 
@@ -78,100 +77,102 @@ public class ImageTrackerMobile : ImageTracker
     {
         if (trackedImage.trackingState == TrackingState.Tracking)
         {
-            GameObject TrackedImagePrefab = null;
+            this.IMT.text = " TRACKING \n" + trackedImage.referenceImage.name + "\n looking for target: \n" + ImageTargets[0].TargetName;
+            GameObject trackedImagePrefab = null;
 
-            foreach (var imageTarget in ImageTargets)
+            foreach (var imageTarget in this.ImageTargets)
             {
-                if (imageTarget.TargetName == trackedImage.name)
+                if (imageTarget.TargetName == trackedImage.referenceImage.name)
                 {
-                    if (!GameObject.Find(imageTarget.TargetName))
+                    this.IMT.text = "\n IT Exists";
+                    if (!GameObject.Find(imageTarget.Prefab.name))
                     {
-                        TrackedImagePrefab = Instantiate(imageTarget.Prefab, trackedImage.transform.position, trackedImage.transform.rotation);
+                        trackedImagePrefab = Instantiate(imageTarget.Prefab, trackedImage.transform.position, trackedImage.transform.rotation);
+                        this.IMT.text = this.IMT.text + "\n CREATING PREFAB: " + imageTarget.Prefab.name;
                     }
-                    else {
-                        TrackedImagePrefab = GameObject.Find(imageTarget.TargetName);
+                    else
+                    {
+                        this.IMT.text = this.IMT.text + "\n finding PREFAB: " + imageTarget.Prefab.name;
+                        trackedImagePrefab = GameObject.Find(imageTarget.Prefab.name);
                     }
 
-                    //trackedImageManager.trackedImagePrefab = prefab;
+                    trackedImagePrefab.transform.position = trackedImage.transform.position;
+                    trackedImagePrefab.transform.rotation = trackedImage.transform.rotation * Quaternion.Euler(0, 90, 0);
                 }
             }
-
-            TrackedImagePrefab.transform.position = trackedImage.transform.position;
-            TrackedImagePrefab.transform.rotation = trackedImage.transform.rotation;
         }
 
     }
 
-
     public async override void RegisterImage(UniversalImageTarget imageTarget)
     {
+        this.ImageTargets.Add(imageTarget);
+
         var jobHandle = mutableRuntimeReferenceImageLibrary.ScheduleAddImageJob(imageTarget.Image, imageTarget.TargetName, imageTarget.Scale);
-
-        //imageTarget.Prefab.name = imageTarget.TargetName;
-
-        ImageTargets.Add(imageTarget);
 
         jobHandle.Complete();
 
         if (jobHandle.IsCompleted)
         {
-            IMT.text =  imageTarget.TargetName + "\n" + " ADDED";
+            this.IMT.text = imageTarget.TargetName + "\n" + " ADDED";
         }
-        else {
-            IMT.text = imageTarget.TargetName + "\n" + " NOT ADDED";
+        else
+        {
+            this.IMT.text = imageTarget.TargetName + "\n" + " NOT ADDED";
         }
-        
     }
 
+    public override void RemoveImage(UniversalImageTarget imageTarget)
+    {
+        int index = this.FindImageTargetIndex(imageTarget);
 
-    public override void RemoveImage(UniversalImageTarget imageTarget) {
+        this.ImageTargets.Remove(imageTarget);
+        this.IMT.text = imageTarget.TargetName + "\n" + " Removed";
 
-        int index = FindImageTargetIndex(imageTarget);
+        this.trackedImageManager.trackedImagesChanged -= this.OnTrackedImagesChanged;
 
-        ImageTargets.Remove(imageTarget);
+        this.buildTrackedImageManager(this.trackedImageManager.currentMaxNumberOfMovingImages);
 
-        trackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
-
-        buildTrackedImageManager(trackedImageManager.maxNumberOfMovingImages);
-
-        AddImagesToLibrary(ImageTargets);
+        this.AddImagesToLibrary(this.ImageTargets);
     }
 
     public override void ReplaceImagePrefab(UniversalImageTarget imageTarget, GameObject newPrefab)
     {
-        int index = FindImageTargetIndex(imageTarget);
+        int index = this.FindImageTargetIndex(imageTarget);
 
-        ImageTargets[index].Prefab = newPrefab;
+        this.ImageTargets[index].Prefab = newPrefab;
     }
 
     public override GameObject GetTackedImagePrefab(UniversalImageTarget imageTarget)
     {
-        return ImageTargets[FindImageTargetIndex(imageTarget)].Prefab;
+        return this.ImageTargets[this.FindImageTargetIndex(imageTarget)].Prefab;
     }
 
     public override void SetMovingImages(int max)
     {
-        buildTrackedImageManager(max);
+        this.buildTrackedImageManager(max);
     }
 
     private void AddImagesToLibrary(List<UniversalImageTarget> imageTargets)
     {
-
-        int i = 0;
-
-        while (i < imageTargets.Count)
+        foreach (var imageTarget in imageTargets)
         {
-
-            RegisterImage(imageTargets[i]);
-
-            i++;
+            this.RegisterImage(imageTarget);
         }
     }
 
     private void OnDisable()
     {
-        trackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
+        //this.trackedImageManager.trackedImagesChanged -= OnTrackedImagesChanged;
     }
 
-}
+    public override void PlatformOnDestroy(UniversalImageTarget imageTarget)
+    {
+        this.RemoveImage(imageTarget);
+    }
 
+    public override void PlatformOnDestroy(UniversalImageTarget imageTarget, GameObject newParent)
+    {
+        this.RemoveImage(imageTarget);
+    }
+}

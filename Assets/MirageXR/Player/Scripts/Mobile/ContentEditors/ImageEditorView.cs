@@ -34,10 +34,10 @@ public class ImageEditorView : PopupEditorBase
         _toggleOrientation.isOn = _orientation;
     }
 
-    private void OnDestroy()
+/*    private void OnDestroy()
     {
         if (_capturedImage) Destroy(_capturedImage);
-    }
+    }*/
 
     protected override void OnAccept()
     {

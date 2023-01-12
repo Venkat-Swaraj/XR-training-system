@@ -277,23 +277,19 @@ namespace MirageXR
         {
             Place place = GetPlaceFromTaskStationId(action.id);
 
-
             Poi poi = place.pois.Find((item) => item.id == toggleObject.poi);
             if (poi != null)
             {
-                Object.Destroy(GameObject.Find(poi.id));
+                if (toggleObject.predicate == "imagemarker")
+                {
+                    GameObject.Find(poi.id).GetComponent<ImageMarkerController>().PlatformOnDestroy();
+                }
+                else
+                {
+                    Object.Destroy(GameObject.Find(poi.id));
+                }
+
                 place.pois.Remove(poi);
-            }
-
-            if (toggleObject.predicate == "imagemarker")
-            {
-                Detectable detectable = GetDetectable(GetPlaceFromTaskStationId(toggleObject.id));
-
-                GameObject detectableObj = GameObject.Find(detectable.id);
-                GameObject detectableParentObj = GameObject.Find("Detectables");
-
-                //as Vuforia dosent allow image markers to be destroyed at run time the detectable is moved instead leaving the marker still in the scene but removeing its content
-                detectableObj.transform.parent = detectableParentObj.transform;
             }
         }
 

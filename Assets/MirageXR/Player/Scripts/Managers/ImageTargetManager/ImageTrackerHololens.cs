@@ -93,6 +93,16 @@ public class ImageTrackerHololens : ImageTracker
         Debug.Log("N/A On HoloLens");
     }
 
+    public override void PlatformOnDestroy(UniversalImageTarget imageTarget)
+    {
+        //imageTarget.Prefab.transform.parent = newParent.transform;
+    }
+
+    public override void PlatformOnDestroy(UniversalImageTarget imageTarget, GameObject newParent)
+    {
+        imageTarget.Prefab.transform.parent = newParent.transform;
+    }
+
     /// <summary>
     /// Instatiates tracked image prefab and sets its parent to the tracked image object. If the tracked image prefab already exists in the scene it is set as a child but not Instatiated.
     /// </summary>

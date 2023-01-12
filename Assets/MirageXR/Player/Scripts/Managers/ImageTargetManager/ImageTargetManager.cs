@@ -1,5 +1,6 @@
 namespace MirageXR
 {
+    using System.Collections.Generic;
     using System.IO;
     using System.Threading.Tasks;
     using UnityEngine;
@@ -46,15 +47,15 @@ namespace MirageXR
         /// <returns> New UniversalImageTarget.</returns>
         public UniversalImageTarget CreateUniversalImageTarget(string targetName, GameObject prefab, string path)
         {
-            this.LoadImage(path, targetName);
+            Texture2D t = this.LoadImage(path, targetName);
 
             UniversalImageTarget imageTarget = new UniversalImageTarget
             {
                 TargetName = targetName,
                 Path = path,
-                Image = this.tex,
+                Image = t,
                 Prefab = prefab,
-                Scale = this.tex.width,
+                Scale = t.width,
             };
 
             return imageTarget;
@@ -149,6 +150,34 @@ namespace MirageXR
             return imageTarget;
         }
 
+        /// <summary>
+        /// Used to destroy an image target in both the Vuforia and ARFoundations way. Image target prefab will be destroyed.
+        /// </summary>
+        /// <param name="imageTarget">Image target to be destoryed.</param>
+        public void OnPlatfromDestroy(UniversalImageTarget imageTarget)
+        {
+            this.ImageTrackerInstance().PlatformOnDestroy(imageTarget);
+        }
+
+        /// <summary>
+        /// Used to destroy an image target in both the Vuforia and ARFoundations way. Image target prefab will move to new parent.
+        /// </summary>
+        /// <param name="imageTarget">Image target to be destoryed.</param>
+        /// <param name="parentPrefab">New parent for image target prefab.</param>
+        public void OnPlatfromDestroy(UniversalImageTarget imageTarget, GameObject parentPrefab)
+        {
+            this.ImageTrackerInstance().PlatformOnDestroy(imageTarget, parentPrefab);
+        }
+
+        /// <summary>
+        /// Returns the list of tracked UniversalImageTargets.
+        /// </summary>
+        /// <returns> List of all tracked UniversalImageTargets.</returns>
+        public List<UniversalImageTarget> GetImageTargetList()
+        {
+            return this.ImageTrackerInstance().ImageTargets;
+        }
+
         private void Start()
         {
             this.CreateImageTracker();
@@ -169,7 +198,7 @@ namespace MirageXR
             return this.imageTracker;
         }
 
-        private async Task LoadImage(string path, string name)
+        private Texture2D LoadImage(string path, string name)
         {
             Texture2D loadTexture = new Texture2D(2, 2);
 
@@ -177,6 +206,7 @@ namespace MirageXR
             loadTexture.LoadImage(byteArray);
 
             this.tex = loadTexture;
+            return loadTexture;
         }
     }
 }
