@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using i5.Toolkit.Core.VerboseLogging;
 using ICSharpCode.SharpZipLib.Zip;
 
 /// <summary>
@@ -17,6 +18,7 @@ public static class ZipUtilities
     /// <returns></returns>
     public static async Task ExtractZipFileAsync(Stream stream, string outFolder)
     {
+        AppLog.LogInfo("Extracting zip file...");
         using (var zipFile = new ZipFile(stream))
         {
             foreach (ZipEntry zipEntry in zipFile)
@@ -51,12 +53,23 @@ public static class ZipUtilities
     /// <returns></returns>
     public static async Task CompressFolderAsync(string path, ZipOutputStream zipStream, int compressionLevel = 5)
     {
+        AppLog.LogTrace($"Received call for compression for {path} with compression level {compressionLevel}");
         const string slash = "\\";
-        if (compressionLevel > 9) compressionLevel = 9;
-        if (compressionLevel < 0) compressionLevel = 0;
+        if (compressionLevel > 9)
+        {
+            AppLog.LogTrace($"Provided compression level for folder was {compressionLevel} and is therefore reset to 9");
+            compressionLevel = 9;
+        }
+        if (compressionLevel < 0)
+        {
+            compressionLevel = 0;
+            AppLog.LogTrace($"Provided compression level for folder was {compressionLevel} and is therefore reset to 0");
+        }
         zipStream.SetLevel(compressionLevel);
 
         var folderName = CheckFileForIllegalCharacters(Path.GetDirectoryName(path));
+
+        AppLog.LogDebug($"Compressing folder {folderName} with compression level {compressionLevel}");
 
         if (Directory.Exists(path) && folderName != null)
         {
@@ -65,6 +78,7 @@ public static class ZipUtilities
         }
         else
         {
+            AppLog.LogError($"Compression failed. Either the directory {path} does not exist or the folder name {folderName} was null.");
             throw new ArgumentException();
         }
     }
@@ -72,6 +86,7 @@ public static class ZipUtilities
     // recursively compresses a folder structure
     private static async Task CompressFolderRecursivelyAsync(string path, ZipOutputStream zipStream, int folderOffset)
     {
+        AppLog.LogTrace($"Compressing folder {path} recursively.");
         var files = Directory.GetFiles(path);
         foreach (var filename in files)
         {
@@ -109,6 +124,7 @@ public static class ZipUtilities
     /// <returns></returns>
     public static async Task AddFileToZipStreamAsync(ZipOutputStream zipStream, string sourceFileName, string entryName)
     {
+        AppLog.LogTrace($"Adding file {sourceFileName} to zip as entry {entryName}");
         var fileInfo = new FileInfo(sourceFileName);
         var entry = new ZipEntry(entryName)
         {
