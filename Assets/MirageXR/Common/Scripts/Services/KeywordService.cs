@@ -1,4 +1,5 @@
 ﻿using i5.Toolkit.Core.ServiceCore;
+using i5.Toolkit.Core.VerboseLogging;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -101,9 +102,9 @@ namespace MirageXR
             AddPromptsToKeyword("Add Plugin", () => { ActionEditor.Instance.OnAnnotationAddItemSelected(ContentType.PLUGIN); });
 
             // Tell the KeywordRecognizer about our keywords.
-            Debug.Log("Registering keywords");
+            AppLog.LogTrace("Registering keywords");
             keywordRecognizer = new KeywordRecognizer(keywords.Keys.ToArray());
-            Debug.Log("Keywords registered");
+            AppLog.LogTrace("Keywords registered");
 
             // Register a callback for the KeywordRecognizer and start recognizing!
             keywordRecognizer.OnPhraseRecognized += KeywordRecognizer_OnPhraseRecognized;

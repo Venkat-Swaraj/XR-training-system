@@ -3,6 +3,7 @@ using Microsoft.MixedReality.Toolkit.Utilities;
 using System.Threading.Tasks;
 using MirageXR;
 using Vuforia;
+using i5.Toolkit.Core.VerboseLogging;
 
 public class EditorSceneService
 {
@@ -10,6 +11,7 @@ public class EditorSceneService
 
     public async Task LoadEditorAsync()
     {
+        AppLog.LogInfo("Loading editor scene", this);
         await UnloadExistingScene();
 
         SceneManager.sceneLoaded += SceneManager_sceneLoaded;
@@ -25,6 +27,7 @@ public class EditorSceneService
 
         if (editorScene.isLoaded)
         {
+            AppLog.LogInfo("Unloading editor scene", this);
             await SceneManager.UnloadSceneAsync(editorScene);
         }
 
@@ -33,6 +36,7 @@ public class EditorSceneService
 
     private void SceneManager_sceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        AppLog.LogTrace($"Scene {scene.name} was loaded", this);
         if (BrandManager.Instance.Customizable)
         {
             BrandManager.Instance.AddCustomColors();

@@ -1,5 +1,6 @@
 ﻿using i5.Toolkit.Core.ServiceCore;
 using i5.Toolkit.Core.Utilities;
+using i5.Toolkit.Core.VerboseLogging;
 using Microsoft.MixedReality.Toolkit.Experimental.Utilities;
 using System.Collections;
 using System.Collections.Generic;
@@ -30,6 +31,7 @@ namespace MirageXR
             managerInstanceObj.name = "World Anchor Manager";
             managerInstanceObj.transform.parent = owner.Runner.transform;
             Manager = managerInstanceObj.AddComponent<WorldAnchorManager>();
+            AppLog.LogDebug("World anchor service initialized", this);
         }
 
         /// <summary>
@@ -43,6 +45,7 @@ namespace MirageXR
             GameObject.Destroy(Manager);
             ObjectPool<GameObject>.ReleaseResource(managerInstanceObj);
             managerInstanceObj = null;
+            AppLog.LogDebug("World anchor service shut down", this);
         }
     }
 }

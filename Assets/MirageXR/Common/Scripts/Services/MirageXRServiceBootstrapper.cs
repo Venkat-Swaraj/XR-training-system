@@ -3,6 +3,7 @@ using i5.Toolkit.Core.ExperienceAPI;
 using i5.Toolkit.Core.OpenIDConnectClient;
 using i5.Toolkit.Core.ServiceCore;
 using i5.Toolkit.Core.VerboseLogging;
+using System;
 using UnityEngine;
 
 namespace MirageXR
@@ -36,6 +37,8 @@ namespace MirageXR
             AppLog.MinimumLogLevel = LogLevel.INFO;
 #endif
 
+            PrintStartupInfos();
+
             ServiceManager.RegisterService(new WorldAnchorService());
             ServiceManager.RegisterService(new KeywordService());
 
@@ -50,7 +53,7 @@ namespace MirageXR
             }
             else
             {
-                Debug.LogWarning("xAPI credentials not set. You will not be able to use the ExperienceService and xAPI analytics");
+                AppLog.LogWarning("xAPI credentials not set. You will not be able to use the ExperienceService and xAPI analytics", this);
             }
 
             ServiceManager.RegisterService(new VideoAudioTrackGlobalService());
@@ -105,6 +108,8 @@ namespace MirageXR
                     break;
             }
 
+            AppLog.LogInfo("Initialized LRS client for " + client, this);
+
             return xAPIClient;
         }
 
@@ -123,6 +128,29 @@ namespace MirageXR
                     ServiceManager.RegisterService(new ExperienceService(CreateXAPIClient("ARETE")));
                     break;
             }
+
+            AppLog.LogInfo($"Switched to {selectedLRS} LRS", this);
+        }
+
+        private void PrintStartupInfos()
+        {
+            AppLog.LogInfo("============== MirageXR ==============\n" +
+                $"App Version: {Application.version}\n" +
+                $"Compiled with Unity version: {Application.unityVersion}\n" +
+                $"Platform: {Application.platform}\n" +
+                $"Startup time: {DateTime.Now}\n");
+            AppLog.LogInfo("System Specs:\n" +
+                $"Device Model: {SystemInfo.deviceModel}\n" +
+                $"Device Name: {SystemInfo.deviceName}\n" +
+                $"Device Type: {SystemInfo.deviceType}\n" +
+                $"OS: {SystemInfo.operatingSystem}\n" +
+                $"System Memory: {SystemInfo.systemMemorySize} MB\n" +
+                $"System Graphics Memory: {SystemInfo.graphicsMemorySize} MB\n" +
+                $"Graphics Device Name: {SystemInfo.graphicsDeviceName}\n" +
+                $"Graphics Device Vendor: {SystemInfo.graphicsDeviceVendor}\n" +
+                $"Graphics Device Version: {SystemInfo.graphicsDeviceVersion}\n" +
+                $"Processor Count: {SystemInfo.processorCount}\n" +
+                $"Processor Type: {SystemInfo.processorType}");
         }
     }
 }
