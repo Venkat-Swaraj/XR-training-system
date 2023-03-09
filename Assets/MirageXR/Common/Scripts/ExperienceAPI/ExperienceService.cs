@@ -4,6 +4,9 @@ using MirageXR;
 using i5.Toolkit.Core.ServiceCore;
 using i5.Toolkit.Core.ExperienceAPI;
 using Newtonsoft.Json.Linq;
+using i5.Toolkit.Core.VerboseLogging;
+using i5.Toolkit.Core.Utilities;
+using System.Threading.Tasks;
 
 namespace MirageXR
 {
@@ -42,6 +45,7 @@ namespace MirageXR
             EventManager.OnStepDeactivatedStamp += StepDeactivatedStamp; // experienced
             EventManager.OnActivityCompletedStamp += ActivityCompletedStamp; // completd
             EventManager.OnCompletedMeasurement += CompletedMeasurement;
+            AppLog.LogTrace("Initialized experience service", this);
         }
 
         /// <summary>
@@ -58,6 +62,7 @@ namespace MirageXR
             EventManager.OnStepDeactivatedStamp -= StepDeactivatedStamp;
             EventManager.OnActivityCompletedStamp -= ActivityCompletedStamp;
             EventManager.OnCompletedMeasurement -= CompletedMeasurement;
+            AppLog.LogTrace("Cleaned up experience service", this);
         }
 
         // !!!!!!! This never gets called !!!!!!!!!
@@ -317,12 +322,12 @@ namespace MirageXR
                         context.AddParentActivity(parentActivityIRI);
                         statement.context = context;
 
-                        await xAPIClient.SendStatementAsync(statement);
+                        await SendStatementAsync(statement, "ToggleObject");
                     }
                 }
                 else
                 {
-                    Debug.LogWarning($"URL field of poi {act.poi} in task station {act.id} is empty");
+                    AppLog.LogWarning($"URL field of poi {act.poi} in task station {act.id} is empty. Therefore, I am not sending an xAPI statement for object toggle.", this);
                 }
             }
         }
@@ -339,7 +344,7 @@ namespace MirageXR
             result.AddMeasurementAttempt(measurementIRI, measurementValue);
             statement.result = result;
 
-            await xAPIClient.SendStatementAsync(statement);
+            await SendStatementAsync(statement, "CompletedMeasurement");
         }
 
         // called if an activity is completed
@@ -352,7 +357,7 @@ namespace MirageXR
             obj.AddName(activityManager.Activity.name);
             Statement statement = GenerateStatement(verb, obj);
 
-            await xAPIClient.SendStatementAsync(statement);
+            await SendStatementAsync(statement, "ActivityCompleted");
         }
 
         // called if an activity is loaded
@@ -364,7 +369,7 @@ namespace MirageXR
             obj.AddName(activityManager.Activity.name);
             Statement statement = GenerateStatement(verb, obj);
 
-            await xAPIClient.SendStatementAsync(statement);
+            await SendStatementAsync(statement, "ActivityLoaded");
         }
 
         // called if an action step is activated
@@ -389,7 +394,7 @@ namespace MirageXR
             context.AddParentActivity(parentActivityIRI);
             statement.context = context;
 
-            await xAPIClient.SendStatementAsync(statement);
+            await SendStatementAsync(statement, "StepActivated");
         }
 
         // called if an action step is deactivated
@@ -414,7 +419,7 @@ namespace MirageXR
             context.AddParentActivity(parentActivityIRI);
             statement.context = context;
 
-            await xAPIClient.SendStatementAsync(statement);
+            await SendStatementAsync(statement, "StepDeactivated");
         }
 
 
@@ -473,6 +478,20 @@ namespace MirageXR
         private string createVerbIRI(string verbID)
         {
             return mirageIRIroot + "/verb/" + verbID;
+        }
+
+        private async Task SendStatementAsync(Statement statement, string eventName)
+        {
+            AppLog.LogTrace($"Sending xAPI statement to record event {eventName}", this);
+            WebResponse<string> response = await xAPIClient.SendStatementAsync(statement);
+            if (response.Successful)
+            {
+                AppLog.LogTrace($"Successfully sent xAPI statement for event {eventName}.", this);
+            }
+            else
+            {
+                AppLog.LogError($"Failed sending xAPI statement for event {eventName}. Error: {response.ErrorMessage}");
+            }
         }
     }
 }

@@ -31,7 +31,7 @@ namespace MirageXR
             managerInstanceObj.name = "World Anchor Manager";
             managerInstanceObj.transform.parent = owner.Runner.transform;
             Manager = managerInstanceObj.AddComponent<WorldAnchorManager>();
-            AppLog.LogDebug("World anchor service initialized", this);
+            AppLog.LogTrace("World anchor service initialized", this);
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace MirageXR
             GameObject.Destroy(Manager);
             ObjectPool<GameObject>.ReleaseResource(managerInstanceObj);
             managerInstanceObj = null;
-            AppLog.LogDebug("World anchor service shut down", this);
+            AppLog.LogTrace("World anchor service shut down", this);
         }
     }
 }
