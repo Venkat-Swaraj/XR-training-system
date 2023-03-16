@@ -4,6 +4,7 @@ using Microsoft.MixedReality.Toolkit.UI;
 using MirageXR;
 using UnityEngine;
 using Microsoft.MixedReality.Toolkit.UI.BoundsControl;
+using i5.Toolkit.Core.VerboseLogging;
 
 public class PoiEditor : MonoBehaviour
 {
@@ -78,6 +79,7 @@ public class PoiEditor : MonoBehaviour
         {
             _boundsControl.enabled = editModeActive;
         }
+        AppLog.LogDebug($"Changed edit mode for poi editor to {editModeActive}", this);
     }
 
     private void OnDisable()
@@ -92,8 +94,7 @@ public class PoiEditor : MonoBehaviour
 
     public void OnChanged(ManipulationEventData data)
     {
-        SetPoiData();
-        EventManager.NotifyOnAugmentationPoiChanged();
+        OnChanged();
     } 
 
     public void OnChanged()
@@ -126,6 +127,7 @@ public class PoiEditor : MonoBehaviour
         {
             poi.scale = Math.Round(transform.localScale.x, 2).ToString() + ", " + Math.Round(transform.localScale.y, 2).ToString() + ", " + Math.Round(transform.localScale.z, 2).ToString();
         }
+        AppLog.LogDebug("Set data for poi", this);
     }
 
 
@@ -152,7 +154,7 @@ public class PoiEditor : MonoBehaviour
 
         if (objectName.Contains("video") || objectName.Contains("image"))
         {
-            Debug.Log("adding video prefab interaction options");
+            AppLog.LogTrace("Adding video prefab interaction options", this);
             GetOrAddComponent<ObjectManipulator>();
         }
         // add other augmentation types here

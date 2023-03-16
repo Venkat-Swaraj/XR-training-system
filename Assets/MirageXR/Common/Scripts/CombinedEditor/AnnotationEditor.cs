@@ -1,4 +1,5 @@
-﻿using MirageXR;
+﻿using i5.Toolkit.Core.VerboseLogging;
+using MirageXR;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -34,6 +35,7 @@ public class AnnotationEditor : MonoBehaviour
     {
         deleteAnnotation.gameObject.SetActive(editModeActive);
         lifeIcon.SetActive(editModeActive);
+        AppLog.LogDebug($"Set edit mode for annotation editor to {editModeActive}", this);
     }
 
     public void DeleteAnnotation()
@@ -43,6 +45,6 @@ public class AnnotationEditor : MonoBehaviour
             TaskStationDetailMenu.Instance.SelectedButton = null;
 
         RootObject.Instance.augmentationManager.DeleteAugmentation(annotationListItem.DisplayedAnnotation);
-
+        AppLog.LogDebug($"Deleted annotation (id: {annotationListItem.DisplayedAnnotation.id})", this);
     }
 }

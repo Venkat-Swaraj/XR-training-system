@@ -1,4 +1,5 @@
-﻿using MirageXR;
+﻿using i5.Toolkit.Core.VerboseLogging;
+using MirageXR;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -17,6 +18,7 @@ public class AppSelection : MonoBehaviour
     /// </summary>
     public void StartRecorder()
     {
+        AppLog.LogInfo("Starting the recorder");
         EventManager.Click();
         SpatialMappingHelper.ActivateSpatialMapping();
         SceneManager.LoadSceneAsync("Recorder", LoadSceneMode.Additive);
@@ -28,6 +30,7 @@ public class AppSelection : MonoBehaviour
     /// </summary>
     public void StartPlayer()
     {
+        AppLog.LogInfo("Starting the player");
         EventManager.Click();
         SpatialMappingHelper.DeactivateSpatialMapping();
 
@@ -39,6 +42,7 @@ public class AppSelection : MonoBehaviour
 
     public void StartLoader()
     {
+        AppLog.LogInfo("Starting ARLEM loading scene");
         EventManager.Click();
         SpatialMappingHelper.DeactivateSpatialMapping();
         SceneManager.LoadSceneAsync("ArlemLoading", LoadSceneMode.Additive);
